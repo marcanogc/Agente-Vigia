@@ -5,7 +5,7 @@ from contextlib import contextmanager
 # Default database file path
 DEFAULT_DB_PATH = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 
-    "sentinel.db"
+    "vigia.db"
 )
 SCHEMA_PATH = os.path.join(os.path.dirname(__file__), "schema.sql")
 

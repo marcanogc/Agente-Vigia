@@ -2,7 +2,7 @@ import os
 import tempfile
 import pytest
 import sqlite3
-from sentinel.database.connection import init_db, get_connection
+from vigia.database.connection import init_db, get_connection
 
 @pytest.fixture
 def temp_db():

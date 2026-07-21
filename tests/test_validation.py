@@ -1,6 +1,6 @@
 import pytest
 from pydantic import ValidationError
-from sentinel.models.validation import ProjectModel, TaskModel, CommunicationModel
+from vigia.models.validation import ProjectModel, TaskModel, CommunicationModel
 
 def test_project_model_valid():
     """Verify that a valid project configuration is parsed successfully."""

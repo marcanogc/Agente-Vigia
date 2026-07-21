@@ -1,5 +1,5 @@
 """
-sentinel/insight/llm.py
+vigia/insight/llm.py
 -----------------------
 Motor de generación de reportes con soporte para:
   1. Amazon Bedrock (Claude 3 Haiku / Sonnet) — recomendado

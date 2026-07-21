@@ -1,8 +1,8 @@
 import os
 import sys
 import subprocess
-from sentinel.database.seed import seed_data
-from sentinel.database.connection import DEFAULT_DB_PATH
+from vigia.database.seed import seed_data
+from vigia.database.connection import DEFAULT_DB_PATH
 
 def main():
     print("=" * 60)
@@ -18,14 +18,14 @@ def main():
         sys.exit(1)
 
     print("\n[*] Paso 2: Iniciando servidor del Dashboard Streamlit...")
-    print("[*] Comando: streamlit run sentinel/dashboard/app.py")
+    print("[*] Comando: streamlit run vigia/dashboard/app.py")
     print("[*] (El navegador debería abrirse automáticamente)")
     print("=" * 60)
     
     # Run streamlit as a subprocess
     app_path = os.path.join(
         os.path.dirname(__file__), 
-        "sentinel", "dashboard", "app.py"
+        "vigia", "dashboard", "app.py"
     )
     
     # Add project root directory to PYTHONPATH for the subprocess

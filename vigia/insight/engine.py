@@ -1,9 +1,9 @@
 import os
 from datetime import datetime
 from typing import List, Dict
-from sentinel.database.connection import DEFAULT_DB_PATH
-from sentinel.audit.engine import AuditEngine
-from sentinel.insight.llm import generate_insights_report
+from vigia.database.connection import DEFAULT_DB_PATH
+from vigia.audit.engine import AuditEngine
+from vigia.insight.llm import generate_insights_report
 
 class InsightEngine:
     """

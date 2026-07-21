@@ -1,8 +1,8 @@
 import os
 import tempfile
 import pytest
-from sentinel.database.connection import get_connection
-from sentinel.database.seed import seed_data
+from vigia.database.connection import get_connection
+from vigia.database.seed import seed_data
 
 @pytest.fixture
 def temp_db():

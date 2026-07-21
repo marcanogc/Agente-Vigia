@@ -1,8 +1,8 @@
 import os
 from datetime import datetime
 from pydantic import ValidationError
-from sentinel.database.connection import get_connection, DEFAULT_DB_PATH
-from sentinel.models.validation import ProjectModel, TaskModel, CommunicationModel
+from vigia.database.connection import get_connection, DEFAULT_DB_PATH
+from vigia.models.validation import ProjectModel, TaskModel, CommunicationModel
 
 class AuditEngine:
     """

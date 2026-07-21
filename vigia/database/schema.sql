@@ -1,4 +1,4 @@
--- Sentinel SQLite Schema
+-- Vigia SQLite Schema
 -- Uses surrogate keys (id) to allow raw ingestion of corrupted records for auditing
 
 CREATE TABLE IF NOT EXISTS projects (

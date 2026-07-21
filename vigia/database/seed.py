@@ -1,6 +1,6 @@
 import os
 import sys
-from sentinel.database.connection import get_connection, init_db, DEFAULT_DB_PATH
+from vigia.database.connection import get_connection, init_db, DEFAULT_DB_PATH
 
 # Define seed datasets
 PROJECTS = [

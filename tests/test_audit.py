@@ -1,8 +1,8 @@
 import os
 import tempfile
 import pytest
-from sentinel.database.seed import seed_data
-from sentinel.audit.engine import AuditEngine
+from vigia.database.seed import seed_data
+from vigia.audit.engine import AuditEngine
 
 @pytest.fixture
 def seeded_db():

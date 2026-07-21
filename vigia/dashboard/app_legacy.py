@@ -1,5 +1,5 @@
 """
-sentinel/dashboard/app.py
+vigia/dashboard/app_legacy.py
 --------------------------
 Dashboard principal de Agente Vigía - Agente Autónomo de Integridad Decisional
 Powered by Amazon Bedrock (Claude) + Streamlit
@@ -19,10 +19,10 @@ from dotenv import load_dotenv
 # Cargar .env si existe (desarrollo local)
 load_dotenv(os.path.join(root_dir, ".env"))
 
-from sentinel.database.connection import DEFAULT_DB_PATH, get_connection
-from sentinel.database.seed import seed_data
-from sentinel.audit.engine import AuditEngine
-from sentinel.insight.engine import InsightEngine
+from vigia.database.connection import DEFAULT_DB_PATH, get_connection
+from vigia.database.seed import seed_data
+from vigia.audit.engine import AuditEngine
+from vigia.insight.engine import InsightEngine
 
 # ─────────────────────────────────────────────────────────────────────────────
 # PAGE CONFIG
@@ -214,7 +214,7 @@ with st.sidebar:
 
     @st.cache_data(ttl=30, show_spinner="Agente Vigía auditando datos...")
     def run_analysis_cached(_key):
-        ref_date = os.environ.get("SENTINEL_REFERENCE_DATE", "2026-07-20T00:00:00")
+        ref_date = os.environ.get("VIGIA_REFERENCE_DATE", "2026-07-20T00:00:00")
         engine = InsightEngine(DEFAULT_DB_PATH, reference_date_str=ref_date)
         return engine.run_analysis()
 
