@@ -5,7 +5,7 @@
 [![Python](https://img.shields.io/badge/Python-3.11+-blue?logo=python)](https://python.org)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.30+-red?logo=streamlit)](https://streamlit.io)
 [![AWS Bedrock](https://img.shields.io/badge/AWS-Bedrock%20Claude%203-orange?logo=amazonaws)](https://aws.amazon.com/bedrock/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue)](LICENSE)
 
 **Hackathon:** IA Masivo Online AWS por Código Facilito 2026 — Reto 3: Agentes Especializados
 
@@ -39,28 +39,28 @@ A diferencia de los agentes IA tradicionales que razonan sobre toda la informaci
 ## Pipeline de Análisis
 
 ```
-┌─────────────────┐     ┌──────────────────┐     ┌─────────────────────┐
-│  FUENTE DE DATOS │────▶│  SCHEMA INSPECTOR │────▶│  GENERIC AUDIT      │
+┌──────────────────┐     ┌───────────────────┐     ┌─────────────────────┐
+│  FUENTE DE DATOS │───▶|  SCHEMA INSPECTOR │────▶│  GENERIC AUDIT      │
 │  SQLite/CSV/Excel│     │  • Introspección  │     │  • 11 reglas        │
 │                  │     │  • Clasificación  │     │  • Score por tabla  │
 │                  │     │  • Inferencia     │     │  • Hallazgos        │
-└─────────────────┘     └──────────────────┘     └─────────┬───────────┘
-                                                            │
-                                                            ▼
-┌─────────────────┐     ┌──────────────────┐     ┌─────────────────────┐
+└──────────────────┘     └───────────────────┘     └─────────┬───────────┘
+                                                             │
+                                                             ▼
+┌─────────────────┐     ┌───────────────────┐     ┌─────────────────────┐
 │   STREAMLIT     │◀────│   LLM LAYER      │◀────│  INSIGHT ENGINE     │
 │   DASHBOARD     │     │  Bedrock/NVIDIA/  │     │  • Detección riesgos│
 │   • 5 tabs      │     │  OpenAI/Mock      │     │  • Prompt dinámico  │
 │   • Exportar    │     │  • Prompt adaptado│     │  • Risk register    │
-└─────────────────┘     └──────────────────┘     └─────────────────────┘
+└─────────────────┘     └───────────────────┘     └─────────────────────┘
 ```
 
 ---
 
 ## Fuentes de Datos Compatibles
 
-| Fuente | Estado | Extensiones |
-|---|---|---|
+| Fuente        | Estado           | Extensiones |
+|---------------|------------------|-------------|
 | **SQLite** | ✅ Disponible | `.db`, `.sqlite`, `.sqlite3` |
 | **CSV** | ✅ Disponible | `.csv` (auto-detecta delimitador y encoding) |
 | **Excel** | ✅ Disponible | `.xlsx`, `.xls` (múltiples hojas) |
@@ -474,7 +474,40 @@ La suite cubre: validación de modelos Pydantic, motor de auditoría (estructura
 
 ## Licencia
 
-MIT
+Este proyecto está licenciado bajo la **Apache License 2.0**.
+
+```
+Copyright (c) 2026 Gabriel Marcano
+```
+
+### Qué permite esta licencia:
+
+| Permiso | |
+|---|---|
+| ✅ Uso comercial | Puedes usar el software en productos comerciales |
+| ✅ Modificación | Puedes modificar el código fuente |
+| ✅ Distribución | Puedes redistribuir el software |
+| ✅ Uso privado | Puedes usar el software de forma privada |
+| ✅ Sublicenciamiento | Puedes otorgar sublicencias |
+| ✅ Grant de patentes | Los contribuyentes otorgan licencia de patentes |
+
+### Condiciones:
+
+| Condición | |
+|---|---|
+| 📋 Incluir licencia y copyright | Debes incluir una copia de la licencia en redistribuciones |
+| 📋 Documentar cambios | Los archivos modificados deben indicar que fueron cambiados |
+| 📋 Preservar atribución | Mantener notices de copyright y atribución |
+
+### Limitaciones:
+
+| Limitación | |
+|---|---|
+| ❌ Sin garantía | El software se proporciona "AS IS" |
+| ❌ Sin responsabilidad | Los autores no son responsables por daños |
+| ❌ Sin uso de marcas | No otorga permiso para usar nombres/marcas del autor |
+
+Consulta el archivo [LICENSE](LICENSE) para el texto completo.
 
 ---
 

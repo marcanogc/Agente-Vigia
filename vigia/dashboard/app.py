@@ -114,7 +114,8 @@ with st.sidebar:
         if st.button("🔄 Cambiar fuente de datos"):
             # Limpiar estado
             for key in ["connection_config", "analysis_ready", "source_name",
-                        "analysis_results", "connector_instance"]:
+                        "analysis_results", "connector_instance",
+                        "trace_flow_state", "selected_trace_step"]:
                 st.session_state.pop(key, None)
             st.rerun()
     
@@ -213,41 +214,169 @@ with st.sidebar:
 
 def run_analysis(config):
     """Ejecuta el pipeline completo: connect → inspect → audit → insights."""
+    import time
     from vigia.connectors.base import ConnectorType
     from vigia.connectors.sqlite_connector import SQLiteConnector
     from vigia.connectors.csv_connector import CSVConnector
     from vigia.inspector.schema_inspector import SchemaInspector
     from vigia.audit.generic_engine import GenericAuditEngine
     from vigia.insight.generic_engine import GenericInsightEngine
+    from vigia.tracing import TraceCollector, EventType
 
-    # 1. Crear conector apropiado
-    if config.connector_type == ConnectorType.SQLITE:
-        connector = SQLiteConnector(config)
-    elif config.connector_type in (ConnectorType.CSV, ConnectorType.EXCEL):
-        connector = CSVConnector(config)
-    else:
-        raise ValueError(f"Conector '{config.connector_type}' no soportado aún.")
+    trace = TraceCollector()
+    trace.start_pipeline()
 
-    # 2. Conectar
-    connector.connect()
+    # ─── Stage 1: Connector ──────────────────────────────────────────────
+    with trace.stage("connector", "Conexión a Fuente de Datos", "🔌"):
+        t0 = time.time()
+        if config.connector_type == ConnectorType.SQLITE:
+            connector = SQLiteConnector(config)
+            trace.info("connector", f"Tipo: SQLite")
+        elif config.connector_type in (ConnectorType.CSV, ConnectorType.EXCEL):
+            connector = CSVConnector(config)
+            trace.info("connector", f"Tipo: CSV/Excel")
+        else:
+            trace.error("connector", f"Conector '{config.connector_type}' no soportado")
+            raise ValueError(f"Conector '{config.connector_type}' no soportado aún.")
 
-    # 3. Inspeccionar esquema
-    inspector = SchemaInspector(connector)
-    schema_metadata = inspector.inspect()
+        connector.connect()
+        tables = connector.get_tables()
+        trace.tool("connector", "connect", 
+                   inputs={"type": config.connector_type.value},
+                   outputs={"tables_found": len(tables), "table_names": tables},
+                   duration_ms=(time.time() - t0) * 1000)
+        trace.decision("connector", "Fuente conectada exitosamente",
+                       reasoning=f"Se detectaron {len(tables)} tablas",
+                       outcome="Proceder a inspección de esquema")
 
-    # 4. Auditar
-    audit_engine = GenericAuditEngine(connector, schema_metadata)
-    audit_report = audit_engine.run_audit()
+    # ─── Stage 2: Schema Inspector ───────────────────────────────────────
+    with trace.stage("inspector", "Inspección de Esquema", "🔍"):
+        t0 = time.time()
+        inspector = SchemaInspector(connector)
+        schema_metadata = inspector.inspect()
 
-    # 5. Generar insights
-    insight_engine = GenericInsightEngine(connector, schema_metadata, audit_report)
-    insight_report = insight_engine.run_analysis()
+        trace.tool("inspector", "inspect_schema",
+                   inputs={"tables": [t.name for t in schema_metadata.tables]},
+                   outputs={
+                       "total_tables": schema_metadata.total_tables,
+                       "total_columns": schema_metadata.total_columns,
+                       "total_rows": schema_metadata.total_rows,
+                       "declared_relationships": len(schema_metadata.declared_relationships),
+                       "inferred_relationships": len(schema_metadata.inferred_relationships),
+                   },
+                   duration_ms=(time.time() - t0) * 1000)
+
+        # Log semantic classifications
+        classified = [p for p in schema_metadata.column_profiles 
+                      if p.semantic_label and p.semantic_label.confidence >= 0.6]
+        trace.info("inspector", f"Clasificación semántica: {len(classified)} columnas clasificadas")
+        for p in classified[:10]:
+            trace.finding("inspector", 
+                         f"{p.table_name}.{p.column_name} → {p.semantic_label.semantic_type.value} ({p.semantic_label.confidence:.0%})",
+                         details={"table": p.table_name, "column": p.column_name,
+                                  "type": p.semantic_label.semantic_type.value,
+                                  "confidence": p.semantic_label.confidence})
+
+        # Log inferred relationships
+        for rel in schema_metadata.inferred_relationships:
+            trace.finding("inspector",
+                         f"Relación inferida: {rel.source_table}.{rel.source_column} → {rel.target_table}.{rel.target_column}",
+                         details={"confidence": rel.confidence, "method": rel.method})
+
+        if schema_metadata.limitations:
+            for lim in schema_metadata.limitations:
+                trace.warning("inspector", lim)
+
+        trace.decision("inspector", "Esquema descubierto completamente",
+                       reasoning=f"{schema_metadata.total_tables} tablas, {schema_metadata.total_columns} columnas, "
+                                 f"{len(schema_metadata.inferred_relationships)} relaciones inferidas",
+                       outcome="Proceder a auditoría de calidad")
+
+    # ─── Stage 3: Audit Engine ───────────────────────────────────────────
+    with trace.stage("audit", "Auditoría de Calidad", "🔍"):
+        t0 = time.time()
+        audit_engine = GenericAuditEngine(connector, schema_metadata)
+        audit_report = audit_engine.run_audit()
+
+        trace.tool("audit", "run_audit",
+                   inputs={"rules_count": len(audit_engine.rules),
+                           "rules": [r.name for r in audit_engine.rules]},
+                   outputs={
+                       "global_score": audit_report.global_quality_score,
+                       "total_findings": audit_report.total_findings,
+                       "critical": audit_report.critical_findings,
+                       "errors": audit_report.error_findings,
+                       "warnings": audit_report.warning_findings,
+                   },
+                   duration_ms=(time.time() - t0) * 1000)
+
+        # Log per-table results
+        for s in audit_report.table_summaries:
+            trace.metric("audit", f"Score: {s.table_name}", s.quality_score)
+            if s.findings_count > 0:
+                trace.finding("audit", 
+                             f"{s.table_name}: {s.quality_score:.1f}/100 ({s.findings_count} hallazgos)",
+                             details={"table": s.table_name, "score": s.quality_score,
+                                      "critical": s.critical_count, "errors": s.error_count})
+
+        # Log top findings
+        for f in sorted(audit_report.findings, 
+                        key=lambda x: {"CRITICAL": 0, "ERROR": 1, "WARNING": 2, "INFO": 3}.get(x.level.value, 4))[:8]:
+            trace.finding("audit",
+                         f"[{f.level.value}] {f.table}.{f.column}: {f.message}",
+                         details={"level": f.level.value, "category": f.category.value,
+                                  "rule": f.rule_name, "affected_rows": f.affected_rows})
+
+        trace.metric("audit", "Data Quality Score", audit_report.global_quality_score)
+        trace.decision("audit", f"Auditoría completada — Score: {audit_report.global_quality_score:.1f}/100",
+                       reasoning=f"{audit_report.total_findings} hallazgos detectados en {audit_report.total_tables_audited} tablas",
+                       outcome="Proceder a generación de insights")
+
+    # ─── Stage 4: Insight Engine ─────────────────────────────────────────
+    with trace.stage("insight", "Generación de Insights", "💡"):
+        t0 = time.time()
+        insight_engine = GenericInsightEngine(connector, schema_metadata, audit_report)
+        insight_report = insight_engine.run_analysis()
+
+        trace.tool("insight", "detect_risks",
+                   inputs={"audit_score": audit_report.global_quality_score},
+                   outputs={"risks_detected": len(insight_report.risks)},
+                   duration_ms=(time.time() - t0) * 1000)
+
+        # Log risks
+        for risk in insight_report.risks[:5]:
+            trace.finding("insight",
+                         f"[{risk.priority.value}] {risk.risk_type} — {risk.table}",
+                         details={"priority": risk.priority.value, "table": risk.table,
+                                  "description": risk.description})
+
+    # ─── Stage 5: LLM Report ────────────────────────────────────────────
+    with trace.stage("llm", "Generación de Reporte IA", "🧠"):
+        trace.info("llm", f"Proveedor utilizado: {insight_report.llm_provider_used}")
+        trace.tool("llm", f"generate_report ({insight_report.llm_provider_used})",
+                   inputs={"provider": insight_report.llm_provider_used,
+                           "context_keys": ["schema_summary", "quality_summary", "findings", "risks"]},
+                   outputs={"report_length": len(insight_report.report_markdown),
+                            "provider_used": insight_report.llm_provider_used})
+        
+        if insight_report.llm_provider_used == "mock":
+            trace.info("llm", "Usando generador local (no hay API keys configuradas)")
+        else:
+            trace.info("llm", f"Reporte generado con {insight_report.llm_provider_used}")
+
+        trace.decision("llm", "Reporte ejecutivo generado",
+                       reasoning=f"Proveedor: {insight_report.llm_provider_used}, "
+                                 f"Longitud: {len(insight_report.report_markdown)} caracteres",
+                       outcome="Pipeline completo")
+
+    trace.end_pipeline(success=True)
 
     return {
         "connector": connector,
         "schema_metadata": schema_metadata,
         "audit_report": audit_report,
         "insight_report": insight_report,
+        "trace": trace,
     }
 
 
@@ -285,7 +414,8 @@ else:
                 with st.expander("Detalles del error"):
                     st.code(traceback.format_exc())
                 if st.button("⬅️ Volver a carga de datos"):
-                    for key in ["connection_config", "analysis_ready", "source_name", "analysis_results"]:
+                    for key in ["connection_config", "analysis_ready", "source_name",
+                                "analysis_results", "trace_flow_state", "selected_trace_step"]:
                         st.session_state.pop(key, None)
                     st.rerun()
                 st.stop()
@@ -296,6 +426,7 @@ else:
     audit_report = results["audit_report"]
     insight_report = results["insight_report"]
     connector = results["connector"]
+    trace = results.get("trace")
 
     # KPIs rápidos en la parte superior
     k1, k2, k3, k4, k5 = st.columns(5)
@@ -307,11 +438,12 @@ else:
     st.markdown("---")
 
     # Tabs principales
-    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
         "📂 Datos",
         "🗂️ Esquema",
         "🔍 Auditoría",
         "💡 Insights",
+        "⚡ Execution Trace",
         "📋 Resumen",
     ])
 
@@ -332,6 +464,13 @@ else:
         render_insights_page(insight_report)
 
     with tab5:
+        if trace:
+            from vigia.dashboard.views.trace_view import render_trace_page
+            render_trace_page(trace)
+        else:
+            st.info("No hay datos de traza disponibles para esta ejecución.")
+
+    with tab6:
         # Resumen ejecutivo rápido
         st.header("📋 Resumen Ejecutivo")
         st.markdown(f"**Fuente:** `{st.session_state.get('source_name', 'Desconocida')}`")
