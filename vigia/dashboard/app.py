@@ -268,7 +268,7 @@ config = st.session_state.get("connection_config", None)
 if config is None:
     # Mostrar página de upload
     st.markdown("---")
-    from vigia.dashboard.pages.upload import render_upload_page
+    from vigia.dashboard.views.upload import render_upload_page
     render_upload_page()
 
 else:
@@ -316,19 +316,19 @@ else:
     ])
 
     with tab1:
-        from vigia.dashboard.pages.data_view import render_data_page
+        from vigia.dashboard.views.data_view import render_data_page
         render_data_page(connector, schema_metadata)
 
     with tab2:
-        from vigia.dashboard.pages.schema_view import render_schema_page
+        from vigia.dashboard.views.schema_view import render_schema_page
         render_schema_page(schema_metadata)
 
     with tab3:
-        from vigia.dashboard.pages.audit_view import render_audit_page
+        from vigia.dashboard.views.audit_view import render_audit_page
         render_audit_page(audit_report)
 
     with tab4:
-        from vigia.dashboard.pages.insights_view import render_insights_page
+        from vigia.dashboard.views.insights_view import render_insights_page
         render_insights_page(insight_report)
 
     with tab5:

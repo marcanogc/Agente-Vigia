@@ -149,7 +149,7 @@ class CSVConnector(BaseConnector):
         if self._connected and self._conn:
             return
 
-        self._conn = sqlite3.connect(":memory:")
+        self._conn = sqlite3.connect(":memory:", check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
 
         file_path = self.config.file_path
