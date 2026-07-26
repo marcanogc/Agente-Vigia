@@ -10,7 +10,9 @@
 **Hackathon:** IA Masivo Online AWS por Código Facilito 2026 — Reto 3: Agentes Especializados
 
 ---
+<img width="2816" height="1584" alt="b2cb6563-778b-4ded-9ea8-1eef55ff038d" src="https://github.com/user-attachments/assets/1ad4734b-704c-485b-9ff5-0bfe15a03b5c" />
 
+---
 ## ¿Qué es Agente Vigía?
 
 Agente Vigía es un **agente inteligente de auditoría de datos** que analiza automáticamente cualquier fuente de datos empresarial sin requerir configuración manual. Descubre esquemas, detecta problemas de calidad, infiere relaciones entre tablas y genera insights ejecutivos con IA — todo desde una interfaz Streamlit interactiva.
